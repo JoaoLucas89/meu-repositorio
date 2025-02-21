@@ -1,0 +1,87 @@
+CREATE VIEW resumo_pedido AS
+SELECT 
+    pe.id AS id_pedido, 
+    c.nome AS nome_cliente, 
+    c.email AS email_cliente, 
+    f.nome AS nome_funcionario, 
+    pr.nome AS nome_produto, 
+    pr.preco, 
+    pe.quantidade, 
+    pe.quantidade * pr.preco AS total
+FROM pedidos pe
+INNER JOIN clientes c ON pe.id_cliente = c.id
+INNER JOIN funcionarios f ON pe.id_funcionario = f.id
+INNER JOIN produtos pr ON pe.id_produto = pr.id;
+
+SELECT id_pedido, nome_cliente, total
+FROM resumo_pedido;
+
+DROP VIEW IF EXISTS resumo_pedido;
+
+CREATE VIEW resumo_pedido AS
+SELECT 
+    pe.id AS id_pedido, 
+    c.nome AS nome_cliente, 
+    c.email AS email_cliente, 
+    f.nome AS nome_funcionario, 
+    pr.nome AS nome_produto, 
+    pr.preco, 
+    pe.quantidade, 
+    pe.quantidade * pr.preco AS total
+FROM pedidos pe
+INNER JOIN clientes c ON pe.id_cliente = c.id
+INNER JOIN funcionarios f ON pe.id_funcionario = f.id
+INNER JOIN produtos pr ON pe.id_produto = pr.id;
+
+SELECT id_pedido, nome_cliente, total
+FROM resumo_pedido;
+
+EXPLAIN SELECT id_pedido, nome_cliente, total FROM resumo_pedido;
+
+CREATE FUNCTION BuscaIngredientesProduto(@id_produto INT)
+RETURNS VARCHAR(255)
+AS
+BEGIN
+    DECLARE @ingredientes VARCHAR(255);
+    
+    SELECT @ingredientes = ingredientes
+    FROM info_produtos
+    WHERE id_produto = @id_produto;
+    
+    RETURN @ingredientes;
+END;
+
+SELECT dbo.BuscaIngredientesProduto(10) AS ingredientes_produto;
+
+CREATE FUNCTION mediaPedido(@id_pedido INT)
+RETURNS VARCHAR(50)
+AS
+BEGIN
+    DECLARE @total_pedido DECIMAL(10,2);
+    DECLARE @media_total DECIMAL(10,2);
+    DECLARE @mensagem VARCHAR(50);
+
+    -- Obtendo o total do pedido
+    SELECT @total_pedido = quantidade * preco
+    FROM pedidos
+    INNER JOIN produtos ON pedidos.id_produto = produtos.id
+    WHERE pedidos.id = @id_pedido;
+
+    -- Calculando a mÃ©dia de todos os pedidos
+    SELECT @media_total = AVG(quantidade * preco)
+    FROM pedidos
+    INNER JOIN produtos ON pedidos.id_produto = produtos.id;
+
+    -- Definindo a mensagem de retorno
+    IF @total_pedido > @media_total
+        SET @mensagem = 'O total do pedido estÃ¡ acima da mÃ©dia.';
+    ELSE IF @total_pedido < @media_total
+        SET @mensagem = 'O total do pedido estÃ¡ abaixo da mÃ©dia.';
+    ELSE
+        SET @mensagem = 'O total do pedido estÃ¡ na mÃ©dia.';
+
+    RETURN @mensagem;
+END;
+
+SELECT dbo.mediaPedido(5) AS resultado_pedido_5;
+SELECT dbo.mediaPedido(6) AS resultado_pedido_6;
